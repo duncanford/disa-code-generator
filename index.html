@@ -31,8 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <link rel="stylesheet" type="text/css" href="http://codemirror.net/lib/codemirror.css">
     <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
     <style>
-        .codeMirror,
-        #codePM {
+        .codeMirror {
             border: 1px solid black;
         }
         
@@ -91,7 +90,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <H2>Overview</H2>
         <div class="row">
             <div class="col-md-12">
-                <p>To purpose of this generator is to quickly create the content for all the separate files you need to create a DISA integration. Almost everything can be keyed from a single name: the name of the plugin. Even though we can collect multiple plugins in a single JAR file, keeping each plugin separate will probably aid maintenance. The generator will create a shell for you to fill with your purpose. As with the PR/PM generator, the aim is to get something running quickly that generates console-logged evidence so that you can move as quickly as possible to the point where you implement the purpose, instead of wasting a lot of time ensuring that everything matches up.</p>
+                <p>To purpose of this generator is to quickly create the content for all the separate five files you need to create a template DISA integration. Almost everything can be keyed from a single name: the name of the plugin. Even though we can collect multiple plugins in a single JAR file, keeping each plugin separate will probably aid maintenance. The generator will create a shell for you to fill with your purpose. As with the PR/PM generator, the aim is to get something running quickly that generates console-logged evidence so that you can move as quickly as possible to the point where you implement the purpose, instead of wasting a lot of time ensuring that everything matches up.</p>
             </div>
         </div>
         <H2>Details</H2>
@@ -159,15 +158,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <H2>PR</H2>
             <div class="bs-callout bs-callout-info" id="instructionPR"></div>
             <textarea id="codePR"></textarea>
+        </div>
+        <div class="row">
             <H2>PM</H2>
             <div class="bs-callout bs-callout-info" id="instructionPM"></div>
             <textarea id="codePM"></textarea>
+        </div>
+        <div class="row">
             <H2>Java</H2>
             <div class="bs-callout bs-callout-info" id="instructionJava"></div>
-            <div id="codePM" class="code"></div>
+            <textarea id="codeJava"></textarea>
+        </div>
+        <div class="row">
             <H2>Manifest</H2>
             <div class="bs-callout bs-callout-info" id="instructionManifest"></div>
-            <div id="codePM" class="code"></div>
+            <textarea id="codeManifest"></textarea>
+        </div>
+        <div class="row">
+            <H2>Build</H2>
+            <div class="bs-callout bs-callout-info" id="instructionBuild"></div>
+            <textarea id="codeBuild"></textarea>
         </div>
     </div>
 
@@ -227,6 +237,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             $("#Object").on("change", function () {
                 RegenerateCode()
             });
+            $("#DISADir").on("keyup", function () {
+                RegenerateCode()
+            });
             $("#PRPM").on("change", function () {
                 RegenerateCode()
             });
@@ -265,31 +278,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         function RegenerateCode() {
             GenerateCode("PR");
             GenerateCode("PM");
+            GenerateCode("Java");
+            GenerateCode("Manifest");
+            GenerateCode("Build");
             $(".CodeMirror").remove();
             CodeMirrorify();
         }
 
         function CodeMirrorify() {
-            CodeMirror.fromTextArea(document.getElementById("codePR"), {
+            config = {
                 lineNumbers: true,
                 lineWrapping: true,
                 matchBrackets: true,
-                continueComments: "Enter",
+                viewportMargin: Infinity,
                 readOnly: true,
-                extraKeys: {
-                    "Ctrl-Q": "toggleComment"
-                }
-            });
-            CodeMirror.fromTextArea(document.getElementById("codePM"), {
-                lineNumbers: true,
-                lineWrapping: true,
-                matchBrackets: true,
-                continueComments: "Enter",
-                readOnly: true,
-                extraKeys: {
-                    "Ctrl-Q": "toggleComment"
-                }
-            });
+                mode:"javascript"
+            };
+            CodeMirror.fromTextArea(document.getElementById("codePR"), config);
+            CodeMirror.fromTextArea(document.getElementById("codePM"), config);
+            CodeMirror.fromTextArea(document.getElementById("codeJava"), config);
+            CodeMirror.fromTextArea(document.getElementById("codeManifest"), config);
+            CodeMirror.fromTextArea(document.getElementById("codeBuild"), {mode:"xml"});
         }
 
         function GenerateCode(type) {
@@ -319,19 +328,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('    SiebelJS.Extend(TemplatePR, SiebelAppFacade.' + storeDefExtPR[$("#Object").val() + "-ext"] + ');');
                 strCode += addCode('');
                 strCode += addCode('    TemplatePR.prototype.Init = function () {');
-                strCode += addComment('     // Init is called each time the object is initialised.');
-                strCode += addComment('     // Add code here that should happen before default processing');
                 strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.Init.apply(this, arguments);');
                 strCode += addPRLog('     Init method reached.');
-                strCode += addComment('     // Add code here that should happen after default processing');
+                strCode += addComment('     // attach to the PM method called by the WS when it responds');
+                strCode += addCode('     this.AttachPMBinding("DISAResponse", ShowDISAResponse, {scope:this});');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    function ShowDISAResponse(response) {');
+                strCode += addPRLog('     ShowDISAResponse function reached.');
+                strCode += addCode('     SiebelJS.Log(response);');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addCode('    TemplatePR.prototype.ShowUI = function () {');
-                strCode += addComment('     // ShowUI is called when the object is initially laid out.');
-                strCode += addComment('     // Add code here that should happen before default processing');
                 strCode += addPRLog('     ShowUI method reached.');
                 strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.ShowUI.apply(this, arguments);');
-                strCode += addComment('     // Add code here that should happen after default processing');
+                strCode += addComment('     // Initiate the call to the custom DISA Plugin');
+                strCode += addCode('     this.GetPM().ExecuteMethod("callDISAPlugin");');
                 if (userProps.length > 0) {
                     for (prop in userProps) {
                         if (userProps[prop] != "") {
@@ -339,31 +351,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         }
                     }
                 }
-                strCode += addCode('    }');
-                strCode += addCode('');
-                strCode += addCode('    TemplatePR.prototype.BindData = function (bRefresh) {');
-                strCode += addComment('     // BindData is called each time the data set changes.');
-                strCode += addComment('     // This is where you\'ll bind that data to user interface elements you might have created in ShowUI');
-                strCode += addComment('     // Add code here that should happen before default processing');
-                strCode += addPRLog('     BindData method reached.');
-                strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.BindData.apply(this, arguments);');
-                strCode += addComment('     // Add code here that should happen after default processing');
-                strCode += addCode('    }');
-                strCode += addCode('');
-                strCode += addCode('    TemplatePR.prototype.BindEvents = function () {');
-                strCode += addComment('     // BindEvents is where we add UI event processing.');
-                strCode += addComment('     // Add code here that should happen before default processing');
-                strCode += addPRLog('     BindEvents method reached.');
-                strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.BindEvents.apply(this, arguments);');
-                strCode += addComment('     // Add code here that should happen after default processing');
-                strCode += addCode('    }');
-                strCode += addCode('');
-                strCode += addCode('    TemplatePR.prototype.EndLife = function () {');
-                strCode += addComment('     // EndLife is where we perform any required cleanup.');
-                strCode += addComment('     // Add code here that should happen before default processing');
-                strCode += addPRLog('     EndLife method reached.');
-                strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.EndLife.apply(this, arguments);');
-                strCode += addComment('     // Add code here that should happen after default processing');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addCode('    return TemplatePR;');
@@ -380,12 +367,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode(' define("siebel/custom/TemplatePM", ["' + storeDefExtPM[$("#Object").val() + "-def"] + '"],');
                 strCode += addCode('  function () {');
                 strCode += addCode('   SiebelAppFacade.TemplatePM = (function () {');
+                strCode += addCode('');
+                strCode += addCode('    var consts = SiebelJS.Dependency("SiebelApp.Constants");');
+                strCode += addCode('    var DISA_PLUGIN = "plugin_<TemplateLC>";');
+                strCode += addCode('    consts.set("WS_"+DISA_PLUGIN.toUpperCase()+"_VERSION", "1.0.0");');
+                strCode += addCode('');
+                strCode += addCode('    var DISAHandler = null;');
+                strCode += addCode('    var attachedHandlers = 0;');
+                strCode += addCode('');
                 if (userProps.length > 0) {
                     var done = false;
                     for (prop in userProps) {
                         if (userProps[prop] != "" && !done) {
                             strCode += addCode('');
-                            strCode += addCode('    var consts = SiebelJS.Dependency("SiebelApp.Constants");');
                             strCode += addCode('    var utils = SiebelJS.Dependency("SiebelApp.Utils");');
                             done = true;
                         }
@@ -398,20 +392,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('');
                 strCode += addCode('    SiebelJS.Extend(TemplatePM, SiebelAppFacade.' + storeDefExtPM[$("#Object").val() + "-ext"] + ');');
                 strCode += addCode('');
-                strCode += addCode('    TemplatePM.prototype.Init = function () {');
-                strCode += addComment('     // Init is called each time the object is initialised.');
-                strCode += addComment('     // Add code here that should happen before default processing');
-                strCode += addCode('     SiebelAppFacade.TemplatePM.superclass.Init.apply(this, arguments);');
-                strCode += addPMLog('     Init method reached.');
-                strCode += addComment('     // Add code here that should happen after default processing');
-                strCode += addCode('    }');
-                strCode += addCode('');
                 strCode += addCode('    TemplatePM.prototype.Setup = function (propSet) {');
-                strCode += addComment('     // Setup is called each time the object is initialised.');
-                strCode += addComment('     // Add code here that should happen before default processing');
-                strCode += addPMLog('     Setup method reached.');
-                strCode += addCode('     SiebelAppFacade.TemplatePR.superclass.Setup.apply(this, arguments);');
-                strCode += addComment('     // Add code here that should happen after default processing');
+                strCode += addCode('     SiebelAppFacade.TemplatePM.superclass.Setup.apply(this, arguments);');
+                strCode += addComment('     // Register a method to interface with DISA. This will be called from the PR.');
+                strCode += addCode('     this.AddMethod("callDISAPlugin", callDISAPlugin, {sequence:false, scope:this});');
+                strCode += addComment('     // Register a method which will carry the DISA plugin response back to the PR');
+                strCode += addCode('     this.AddMethod("DISAResponse", function() {}, {});');
+                strCode += addComment('     // Increase the number of attached handlers');
+                strCode += addCode('     attachedHandlers++;');
                 if (userProps.length > 0) {
                     for (prop in userProps) {
                         if (userProps[prop] != "") {
@@ -420,6 +408,83 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     }
                 }
                 strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    TemplatePM.prototype.EndLife = function () {');
+                strCode += addComment('     // Called when the PM is no longer needed');
+                strCode += addCode('     SiebelAppFacade.TemplatePM.superclass.EndLife.apply(this, arguments);');
+                strCode += addComment('     // Reduce attachHandlers and, if necessary, destroy the WS Handler');
+                strCode += addCode('     if (--attachedHandlers == 0) {');
+                strCode += addCode('      unregisterDISAHandler.call();');
+                strCode += addCode('     }');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    function callDISAPlugin() {');
+                strCode += addCode('     var handler = getDISAHandler.call(this);');
+                strCode += addComment('     // here we create an object containing data which the Java application will read.');
+                strCode += addComment('     // Neither "Command", nor "GetSysInfo" are DISA specific.');
+                strCode += addComment('     // The shape and content of the message is entirely up to the developer.');
+                strCode += addCode('     var msgJSON = {};');
+                strCode += addCode('     msgJSON["Command"] = "<TemplateName>";');
+                strCode += addCode('     handler.SendMessage(msgJSON);');
+                strCode += addComment('     // the message is sent asychronously, so once the command is sent, nothing further happens');
+                strCode += addComment('     // within the PR/PM until a message is received.');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    function getDISAHandler() {');
+                strCode += addCode('     if (DISAHandler === null) {');
+                strCode += addCode('      DISAHandler = SiebelApp.WebSocketManager.CreateWSHandler(DISA_PLUGIN);');
+                strCode += addComment('     // communications with DISA are asynchronous. We define handler functions here to deal with');
+                strCode += addComment('     // possible responses from DISA, such as a message or communication failure conditions.');
+                strCode += addCode('      DISAHandler.OnClose = onWSClose.bind(this);');
+                strCode += addCode('      DISAHandler.OnFail = onWSSendFail.bind(this);');
+                strCode += addCode('      DISAHandler.OnMessage = onWSMessage.bind(this);');
+                strCode += addCode('     }');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    function onWSMessage(msg, fileName) {');
+                strCode += addComment('     // this is the result of callDISAPlugin if all goes well');
+                strCode += addCode('     handleMsg.call(this,msg);');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addComment('    // Normally this indicates something wrong with communication attempt to operator at DISA');
+                strCode += addComment('    // Maybe because Siebel OpenUI never establishes connection with DISA due to various reasons');
+                strCode += addComment('    // Maybe because the version number at two sides are not matched, operator version should be equal or newer');
+                strCode += addComment('    // Reset state or other variables if necessary');
+                strCode += addCode('    function onWSSendFail() {');
+                strCode += addCode('     handleException("Failed to send message to DISA");');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addComment('    // This indicates Siebel OpenUI with DISA connection was lost');
+                strCode += addComment('    // Maybe because Siebel OpenUI never establishes connection with DISA due to various reasons');
+                strCode += addComment('    // Maybe because DISA exited (by user) or crashed');
+                strCode += addComment('    // Reset state or other variables if necessary');
+                strCode += addCode('    function onWSClose() {');
+                strCode += addCode('     handleException("Connection to DISA was lost");');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addComment('    // Called by onWSMessage event handler');
+                strCode += addCode('    function handleMsg(msg) {');
+                strCode += addComment('    // Log the message received');
+                strCode += addPMLog('      JSON message received: " + JSON.stringify(msg)) + "');
+//                strCode += addCode('     SiebelJS.Log(this.Get("GetName")+": JSON message received: " + JSON.stringify(msg));');
+                strCode += addComment('    // Pass the message to the PR');
+                strCode += addCode('     this.ExecuteMethod("DISAResponse",msg);');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addComment('    // Called by onWSClose or onWSSendFail event handler');
+                strCode += addCode('    function handleException(msg) {');
+                strCode += addComment('    // Add other error handling logic');
+                strCode += addCode('     SiebelJS.Log(err);');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addComment('    // Tidy up');
+                strCode += addCode('    function unregisterDISAHandler(msg) {');
+                strCode += addCode('     if (DISAHandler) {');
+                strCode += addCode('      DISAHandler.Unregister();');
+                strCode += addCode('      DISAHandler = null;');
+                strCode += addCode('     }');
+                strCode += addCode('    }');
+
                 if (userProps.length > 0) {
                     var done = false;
                     for (prop in userProps) {
@@ -451,19 +516,122 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode(' })');
                 strCode += addCode('}');
                 break;
+            case "Java":
+                strCode += addCode('package com.siebel.wsserver.plugin;');
+                strCode += addCode('');
+                strCode += addCode('import com.siebel.wsserver.operator.CSSWSSingletonOperator;');
+                strCode += addCode('import com.google.gson.JsonObject;');
+                strCode += addCode('');
+                strCode += addCode('public class CSSWS<TemplateName>Operator extends CSSWSSingletonOperator {');
+                strCode += addCode('');
+                strCode += addCode(' java.util.logging.Logger logger = java.util.logging.Logger.getLogger("disa.server");');
+                strCode += addCode('');
+                strCode += addCode(' public static final String COMMAND = "Command";');
+                strCode += addCode('');
+                strCode += addComment(' /*');
+                strCode += addComment(' * Return the type of this plugin operator.');
+                strCode += addComment(' */');
+                strCode += addCode(' @Override');
+                strCode += addCode(' public String getType() {');
+                strCode += addCode('  logger.warning("**** PLUGIN_<TemplateUC> LOADED ****");');
+                strCode += addCode('  return "plugin_<TemplateLC>";');
+                strCode += addCode(' }');
+                strCode += addCode('');
+                strCode += addComment(' /*');
+                strCode += addComment(' * Return the version of this plugin operator.');
+                strCode += addComment(' */');
+                strCode += addCode(' @Override');
+                strCode += addCode(' public String getVersion() {');
+                strCode += addCode('  return "1.0.0";');
+                strCode += addCode(' }');
+                strCode += addCode('');
+                strCode += addCode(' @Override');
+                strCode += addCode(' protected void processMessage(JsonObject msg) {');
+                strCode += addCode('  if (msg.has(COMMAND)) {');
+                strCode += addCode('   if (msg.get(COMMAND).getAsString().equals("<TemplateName>")) {');
+                strCode += addCode('    <TemplateName>();');
+                strCode += addCode('   }');
+                strCode += addCode('  }');
+                strCode += addCode(' }');
+                strCode += addCode('');
+                strCode += addCode(' private void <TemplateName>() {');
+                strCode += addCode('  JsonObject response = new JsonObject();');
+                strCode += addCode('  response.addProperty("DISAResponse", "Hello from <TemplateName>");');
+                strCode += addCode('  sendMessage(response);');
+                strCode += addCode(' }');
+                strCode += addCode('}');
+                break;
+            case "Manifest":
+                strCode += addCode('com.siebel.wsserver.plugin.CSSWS<TemplateName>Operator');
+                break;
+            case "Build":
+                strCode += addCode('<project name="<TemplateName>" basedir="." default="buildjar">');
+                strCode += addCode(' <presetdef name="javac">');
+                strCode += addCode('  <javac includeantruntime="false" />');
+                strCode += addCode(' </presetdef>');
+                strCode += addCode(' <property name="target.name" value="<TemplateName>"/>');
+                strCode += addCode(' <property name="src.dir"     value="src"/>');
+                strCode += addCode(' <property name="metainf.dir" value="${src.dir}/META-INF"/>');
+                strCode += addCode(' <property name="build.dir"   value="build"/>');
+                strCode += addCode(' <property name="classes.dir" value="${build.dir}/classes"/>');
+                strCode += addCode(' <property name="jar.dir"     value="${build.dir}/jar"/>');
+                strCode += addCode(' <property name="lib.dir"     value="'+$("#DISADir").val()+'/DesktopIntSiebelAgent/lib"/>');
+                strCode += addCode('');
+                strCode += addCode(' <path id="classpath">');
+                strCode += addCode('  <fileset dir="${lib.dir}" includes="disa-api.jar"/>');
+                strCode += addCode('  <fileset dir="${lib.dir}" includes="gson.jar"/>');
+                strCode += addCode(' </path>');
+                strCode += addCode('');
+                strCode += addCode(' <target name="clean">');
+                strCode += addCode('  <delete dir="${build.dir}" />');
+                strCode += addCode('  <mkdir dir="${build.dir}" />');
+                strCode += addCode(' </target>');
+                strCode += addCode('');
+                strCode += addCode(' <target name="compile" depends="clean">');
+                strCode += addCode('  <mkdir dir="${classes.dir}"/>');
+                strCode += addCode('  <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>');
+                strCode += addCode(' </target>');
+                strCode += addCode('');
+                strCode += addCode(' <target name="buildjar" depends="compile">');
+                strCode += addCode('  <mkdir dir="${jar.dir}"/>');
+                strCode += addCode('  <jar destfile="${jar.dir}/${target.name}.jar" basedir="${classes.dir}">');
+                strCode += addCode('   <metainf dir="${metainf.dir}"/>');
+                strCode += addCode('  </jar>');
+                strCode += addCode(' </target>');
+                strCode += addCode('</project>');
+                break;
             }
 
-            strCode = strCode.replace(/TemplatePR/g, $("#Namer").val() + type);
-            strCode = strCode.replace(/TemplatePM/g, $("#Namer").val() + type);
-            $("#instruction" + type).html("Copy and save the code below in your custom folder and call it <code>" + $("#Namer").val() + type + ".js</code>. Get the <strong>cASe</strong> right, it's important.")
-            if (userProps.length > 0) {
-                var done = false;
-                for (prop in userProps) {
-                    if (userProps[prop] != "" && !done && $("#PRPM").val() == "PR") {
-                        $("#instruction").append("<br/><mark>NOTE</mark>:To use custom user properties you will also need a custom PM.");
-                        done = true;
+            // replacements
+            // <TemplatePM>, <TemplatePR>, <TemplateName>, <TemplateLC>, <TemplateUC>, <TemplateProper>
+            strCode = strCode.replace(/TemplatePR/g, "DISA"+$("#Namer").val() + type);
+            strCode = strCode.replace(/TemplatePM/g, "DISA"+$("#Namer").val() + type);
+            strCode = strCode.replace(/<TemplateLC>/g, $("#Namer").val().toLowerCase());
+            strCode = strCode.replace(/<TemplateUC>/g, $("#Namer").val().toUpperCase());
+            strCode = strCode.replace(/<TemplateName>/g, $("#Namer").val());
+            switch(type) {
+            case "PR":
+            case "PM":                
+                $("#instruction" + type).html("Copy and save the code below in your Siebel custom folder and call it <code> DISA" + $("#Namer").val() + type + ".js</code>. Get the <strong>cASe</strong> right, it's important.")
+                if (userProps.length > 0) {
+                    var done = false;
+                    for (prop in userProps) {
+                        if (userProps[prop] != "" && !done && $("#PRPM").val() == "PR") {
+                            $("#instruction").append("<br/><mark>NOTE</mark>:To use custom user properties you will also need a custom PM.");
+                            done = true;
+                        }
                     }
                 }
+                break;
+            case "Java":
+                $("#instruction" + type).html("Copy and save the code below in your Java's src/com/siebel/wsserver/plugin folder and call it <code>CSSWS" + $("#Namer").val() + "Operator.java</code>. Get the <strong>cASe</strong> right, it's important.");
+                break;
+            case "Manifest":
+                $("#instruction" + type).html("Copy and save the code below in your Java's src/META-INF/services folder and call it <code>com.siebel.wsserver.operator.CSSWSOperator</code>. Get the <strong>cASe</strong> right, it's important.");
+                break;
+            case "Build":
+                $("#instruction" + type).html("Copy and save the code below in your Java's src folder and call it <code>build.xml</code>. Get the <strong>cASe</strong> right, it's important.");
+                break;
             }
             if ($("#Object").val().match("Mobile")) {
                 $("#instruction").append("<br/><mark>NOTE</mark>:Mobile types are no longer used in IP2014. Use only the Desktop types even for mobile work.");
@@ -482,8 +650,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     url += "&userprops=" + $("#UserProps").val();
                     url += "&comments=" + (addComments ? "Yes" : "No");
                     url += "&logging=" + (addLogging ? "Yes" : "No");
-                    parent.history.replaceState({}, parent.document.title, "?" + url)
-                    strCode = addCode("//Regenerate using:" + parent.document.location.href) + strCode;
+                    parent.history.replaceState({}, parent.document.title, "?" + url);
+                    switch(type) {
+                        case "PR":
+                        case "PM":
+                        case "Java":
+                            strCode = addCode("//Regenerate using:" + parent.document.location.href) + strCode;
+                            break;
+                    }
                 }
             } catch (e) {}
             $("#code" + type).text(strCode);
