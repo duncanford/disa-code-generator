@@ -46,4 +46,4 @@ To test your plugin, you'll need to place the PR/PM code, register, and administ
 
 ![](support/console.png)
 
-Please [report issues or make suggestions](issues) as you see fit.
+Please [report issues or make suggestions](https://github.com/duncanford/disa-code-generator/issues) as you see fit.
