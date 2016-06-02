@@ -12,19 +12,25 @@ The numbers in the diagram are to help us place the code from the generator. Pla
 
 You're now ready to compile, but before you can do so, you'll need to set up [Ant](http://ant.apache.org/). Once installed properly you should be able to run ant straight from the command line. You can use the following to get the current version:
 
-```ant -v```
+```
+ant -v
+```
 
 ![](support/ant-v.png)
 
 Before finally compiling, just check that your JAVA_HOME is set correctly:
 
-```echo %JAVA_HOME%```
+```
+echo %JAVA_HOME%
+```
 
 ![](support/java_path.png)
 
 Finally we can compile. Note that a successful compilation depends upon the ability of Java to locate the DISA libraries, so make sure you set your DISA location correctly in the generator if something goes wrong. To compile, you only need to type:
 
-```ant```
+```
+ant
+```
 
 If all goes well, you should see something similar to this:
 
