@@ -8,7 +8,7 @@ To get started, unzip the [java.7z](support/java.7z) file to a working location.
 
 ![](support/file_structure.png)
 
-The numbers in the diagram are to help us place the code from the generator. Place the build.xml file you generated into the java top level directory (1), the manifest file into the java/META-INF/services directory (2), and the java code itself in the plugin directory at the bottom of the tree (3).
+The numbers in the diagram are to help us place the code from the generator. Place the build.xml file you generated into the java top level directory (1), the java code itself in the plugin directory at the bottom of the tree (2), and the manifest file into the java/META-INF/services directory (3).
 
 You're now ready to compile, but before you can do so, you'll need to set up [Ant](http://ant.apache.org/). Once installed properly you should be able to run ant straight from the command line. You can use the following to get the current version:
 
