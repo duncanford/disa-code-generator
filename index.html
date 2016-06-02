@@ -439,6 +439,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('      DISAHandler.OnFail = onWSSendFail.bind(this);');
                 strCode += addCode('      DISAHandler.OnMessage = onWSMessage.bind(this);');
                 strCode += addCode('     }');
+                strCode += addCode('     return DISAHandler;');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addCode('    function onWSMessage(msg, fileName) {');
@@ -465,7 +466,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addComment('    // Called by onWSMessage event handler');
                 strCode += addCode('    function handleMsg(msg) {');
                 strCode += addComment('    // Log the message received');
-                strCode += addPMLog('      JSON message received: " + JSON.stringify(msg)) + "');
+                strCode += addPMLog('      JSON message received: " + JSON.stringify(msg) + "');
 //                strCode += addCode('     SiebelJS.Log(this.Get("GetName")+": JSON message received: " + JSON.stringify(msg));');
                 strCode += addComment('    // Pass the message to the PR');
                 strCode += addCode('     this.ExecuteMethod("DISAResponse",msg);');
@@ -474,7 +475,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addComment('    // Called by onWSClose or onWSSendFail event handler');
                 strCode += addCode('    function handleException(msg) {');
                 strCode += addComment('    // Add other error handling logic');
-                strCode += addCode('     SiebelJS.Log(err);');
+                strCode += addCode('     SiebelJS.Log(msg);');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addComment('    // Tidy up');
