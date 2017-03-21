@@ -332,11 +332,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addPRLog('     Init method reached.');
                 strCode += addComment('     // attach to the PM method called by the WS when it responds');
                 strCode += addCode('     this.AttachPMBinding("DISAResponse", ShowDISAResponse, {scope:this});');
+                strCode += addCode('     this.AttachPMBinding("DISAFileResponse", ShowDISAFileResponse, {scope:this});');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addCode('    function ShowDISAResponse(response) {');
                 strCode += addPRLog('     ShowDISAResponse function reached.');
                 strCode += addCode('     SiebelJS.Log(response);');
+                strCode += addCode('    }');
+                strCode += addCode('');
+                strCode += addCode('    function ShowDISAFileResponse(fileName, fileMsg) {');
+                strCode += addPRLog('     ShowDISAFileResponse function reached.');
+                strCode += addCode('     SiebelJS.Log("File Name: "+fileName);');
+                strCode += addCode('     SiebelJS.Log("File Message: "+fileMsg);');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addCode('    TemplatePR.prototype.ShowUI = function () {');
@@ -398,6 +405,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('     this.AddMethod("callDISAPlugin", callDISAPlugin, {sequence:false, scope:this});');
                 strCode += addComment('     // Register a method which will carry the DISA plugin response back to the PR');
                 strCode += addCode('     this.AddMethod("DISAResponse", function() {}, {});');
+                strCode += addCode('     this.AddMethod("DISAFileResponse", function() {}, {});');
                 strCode += addComment('     // Increase the number of attached handlers');
                 strCode += addCode('     attachedHandlers++;');
                 if (userProps.length > 0) {
@@ -442,9 +450,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('     return DISAHandler;');
                 strCode += addCode('    }');
                 strCode += addCode('');
-                strCode += addCode('    function onWSMessage(msg, fileName) {');
+                strCode += addCode('    function onWSMessage(msg, fileName, fileMsg) {');
                 strCode += addComment('     // this is the result of callDISAPlugin if all goes well');
-                strCode += addCode('     handleMsg.call(this,msg);');
+                strCode += addCode('     if (msg instanceof Blob) {');
+                strCode += addComment('      // Message is binary data');
+                strCode += addComment('      // fileName is the ID of the binary data');
+                strCode += addCode('      handleFile.call(this, msg, fileName, fileMsg);');
+                strCode += addCode('     } else {');
+                strCode += addCode('      handleMsg.call(this,msg);');
+                strCode += addCode('     }');
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addComment('    // Normally this indicates something wrong with communication attempt to operator at DISA');
@@ -464,6 +478,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 strCode += addCode('    }');
                 strCode += addCode('');
                 strCode += addComment('    // Called by onWSMessage event handler');
+                strCode += addCode('    function handleFile(msg, fileName, fileMsg) {');
+                strCode += addComment('    // Log the file received');
+                strCode += addPMLog('      JSON file received: " + fileName + "');
+                strCode += addPMLog('      with message: " + JSON.stringify(fileMsg) + "');
+//                strCode += addCode('     SiebelJS.Log(this.Get("GetName")+": JSON message received: " + JSON.stringify(msg));');
+                strCode += addComment('    // Pass the message to the PR');
+                strCode += addComment('    // Pass the fileName and fileMsg to the PR. This is where you will need to decide what to do with the actual file contents');
+                strCode += addCode('     this.ExecuteMethod("DISAFileResponse",fileName,fileMsg);');
+                strCode += addCode('    }');
+                strCode += addCode('');
                 strCode += addCode('    function handleMsg(msg) {');
                 strCode += addComment('    // Log the message received');
                 strCode += addPMLog('      JSON message received: " + JSON.stringify(msg) + "');
@@ -684,6 +708,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         function SetDefaultRadio(input, qs) {
             if (getQueryVariable(qs) != undefined) {
+                eval ('add'+input+'='+(getQueryVariable(qs)=="Yes"?"true":"false"));
                 $('input:radio[name=' + input + ']').filter('[value=' + getQueryVariable(qs) + ']').prop('checked', true).trigger("click");
             }
         }
